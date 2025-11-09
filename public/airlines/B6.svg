@@ -1,3 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <text x="16" y="22" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="white" text-anchor="middle">B6</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
+  <rect width="64" height="64" rx="8" fill="#003D79"/>
+  <text x="50%" y="50%" dy=".35em" text-anchor="middle" fill="#ffffff"
+        font-family="system-ui, sans-serif" font-size="24" font-weight="700">B6</text>
 </svg>

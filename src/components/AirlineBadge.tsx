@@ -1,24 +1,15 @@
 import React, { useState } from "react";
 import { lookupAirlineInfo } from "@/lib/airlines";
+import { publicUrl } from "@/lib/assets";
 
 type Props = {
   name?: string;
-  /** overall visual size in px for pill height (default 28) */
-  size?: number;
-  /** show airline name text inside the pill (default true) */
-  showName?: boolean;
-  /** if true, show only the two-letter code (smaller pill) */
-  codeOnly?: boolean;
-  /** extra className if needed */
+  size?: number;       // pill height
+  showName?: boolean;  // show airline name inside pill
+  codeOnly?: boolean;  // compact pill showing only code
   className?: string;
 };
 
-/**
- * AirlineBadge — pill-style badge with brand color background.
- * - Loads local SVG if available at /airlines/{CODE}.svg
- * - Falls back to two-letter code if SVG missing
- * - Always readable: white text over brand bg
- */
 export default function AirlineBadge({
   name,
   size = 28,
@@ -27,38 +18,38 @@ export default function AirlineBadge({
   className = "",
 }: Props) {
   const { code, bg, fg } = lookupAirlineInfo(name);
-  const [logoOk, setLogoOk] = useState(false); // Start with false - no real logos yet
-  const src = `/airlines/${code}.svg`;
-  
-  console.log(`AirlineBadge: ${name} (${code}) - logo path: ${src}`);
+  const [logoOk, setLogoOk] = useState(true);
 
-  // Computed styles
-  const pillHeight = Math.max(24, size);
-  const iconSize = Math.max(16, Math.floor(pillHeight * 0.72));
+  // ✅ Use BASE_URL-safe path to public assets
+  const src = publicUrl(`airlines/${code}.svg`);
+
+  const pillH = Math.max(24, size);
+  const icon = Math.max(16, Math.floor(pillH * 0.72));
 
   return (
     <div
       className={[
-        "inline-flex items-center rounded-full shadow-sm",
-        "ring-1 ring-black/5",
-        "whitespace-nowrap",
+        "inline-flex items-center rounded-full shadow-sm ring-1 ring-black/5 whitespace-nowrap",
         className,
       ].join(" ")}
-      style={{ backgroundColor: bg, color: fg, height: pillHeight }}
+      style={{ backgroundColor: bg, color: fg, height: pillH }}
       aria-label={name || code}
       title={name || code}
     >
-      {/* Left content: logo or code */}
       <div className="flex items-center pl-2">
         {logoOk ? (
           <img
             src={src}
-            width={iconSize}
-            height={iconSize}
+            width={icon}
+            height={icon}
             alt={name || code}
-            className="h-[1.1em] w-auto object-contain"
-            style={{ height: iconSize, width: iconSize }}
-            onError={() => setLogoOk(false)}
+            className="object-contain"
+            style={{ width: icon, height: icon }}
+            onError={() => {
+              setLogoOk(false);
+              // Helpful once-per-render hint in dev
+              if (import.meta.env.DEV) console.warn("Airline logo missing:", src);
+            }}
             draggable={false}
           />
         ) : (
@@ -68,17 +59,12 @@ export default function AirlineBadge({
         )}
       </div>
 
-      {/* Right text: code or name */}
       {!codeOnly && (
-        <span
-          className="px-2 text-sm font-medium leading-none"
-          style={{ lineHeight: `${pillHeight - 8}px` }}
-        >
+        <span className="px-2 text-sm font-medium leading-none">
           {showName ? (name ?? code) : code}
         </span>
       )}
-
-      {codeOnly && <span className="pr-2" /> }
+      {codeOnly && <span className="pr-2" />}
     </div>
   );
 }
