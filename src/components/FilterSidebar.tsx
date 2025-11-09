@@ -116,11 +116,9 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
       {/* Flight Smoothness */}
       <FilterSection id="smoothness" title="Flight Smoothness">
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">TCI Score Range</span>
-            <span className="font-medium text-foreground">
-              {filters.smoothnessRange[0]} - {filters.smoothnessRange[1]}
-            </span>
+          <div className="flex items-center justify-between text-sm font-medium text-foreground">
+            <span>{filters.smoothnessRange[0]}</span>
+            <span>{filters.smoothnessRange[1]}</span>
           </div>
           <Slider
             min={0}
