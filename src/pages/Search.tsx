@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
 import { Plane, Search as SearchIcon } from "lucide-react";
 import { useState } from "react";
+import { AirportCombobox } from "@/components/AirportCombobox";
 
 const Search = () => {
   const navigate = useNavigate();
@@ -28,13 +29,6 @@ const Search = () => {
     navigate(`/results?${params.toString()}`);
   };
 
-  const handleOriginChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setOrigin(e.target.value.toUpperCase());
-  };
-
-  const handleDestinationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDestination(e.target.value.toUpperCase());
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary">
@@ -62,33 +56,25 @@ const Search = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
                 <Label htmlFor="origin" className="text-base font-medium">
-                  Origin Airport (IATA Code)
+                  Origin Airport
                 </Label>
-                <Input
+                <AirportCombobox
                   id="origin"
-                  type="text"
-                  placeholder="e.g., JFK"
                   value={origin}
-                  onChange={handleOriginChange}
-                  maxLength={3}
-                  required
-                  className="h-12 text-lg uppercase"
+                  onValueChange={setOrigin}
+                  placeholder="e.g., JFK"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="destination" className="text-base font-medium">
-                  Destination Airport (IATA Code)
+                  Destination Airport
                 </Label>
-                <Input
+                <AirportCombobox
                   id="destination"
-                  type="text"
-                  placeholder="e.g., LAX"
                   value={destination}
-                  onChange={handleDestinationChange}
-                  maxLength={3}
-                  required
-                  className="h-12 text-lg uppercase"
+                  onValueChange={setDestination}
+                  placeholder="e.g., LAX"
                 />
               </div>
 
