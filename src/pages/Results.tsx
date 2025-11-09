@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { computeConfidence } from "@/lib/confidence";
 import { humanLabel, aircraftContribution, routeContribution, clamp01 } from "@/lib/present";
 import { estimateRealtimePenalty } from "@/lib/realtime";
+import { aircraftNote } from "@/lib/aircraftNotes";
+import ScoringExplainer from "@/components/ScoringExplainer";
 
 // Minimal IATA → lat/lon map
 const IATA: Record<string, { lat: number; lon: number; city?: string }> = {
@@ -231,14 +233,19 @@ const Results = () => {
                     <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                       {/* Flight Info */}
                       <div className="flex-1 space-y-3">
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-xl font-bold text-foreground">{flight.airline}</h3>
-                          <span className="rounded-md bg-muted px-2 py-1 text-sm font-mono font-semibold">
-                            {flight.flightNumber}
-                          </span>
-                          <span className="rounded-md bg-muted px-2 py-1 text-sm font-mono">
-                            {flight.aircraftIcao}
-                          </span>
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-xl font-bold text-foreground">{flight.airline}</h3>
+                            <span className="rounded-md bg-muted px-2 py-1 text-sm font-mono font-semibold">
+                              {flight.flightNumber}
+                            </span>
+                            <span className="rounded-md bg-muted px-2 py-1 text-sm font-mono">
+                              {flight.aircraftIcao}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {aircraftNote(flight.aircraftIcao)}
+                          </p>
                         </div>
 
                         <div className="flex items-center gap-4 text-lg">
@@ -272,15 +279,20 @@ const Results = () => {
                         </div>
 
                         {/* Felt-experience sentence */}
-                        <p className="text-sm text-muted-foreground text-right">
-                          {tciAdjusted >= 85
-                            ? "Glass-smooth; aisle seats fine."
-                            : tciAdjusted >= 70
-                            ? "Occasional light bumps; aisle OK."
-                            : tciAdjusted >= 55
-                            ? "Choppy; pick window over wing."
-                            : "Rough; over-wing window strongly recommended."}
-                        </p>
+                        <div className="text-right space-y-1">
+                          <p className="text-sm text-muted-foreground">
+                            {tciAdjusted >= 85
+                              ? "Glass-smooth; aisle seats fine."
+                              : tciAdjusted >= 70
+                              ? "Occasional light bumps; aisle OK."
+                              : tciAdjusted >= 55
+                              ? "Choppy; pick window over wing."
+                              : "Rough; over-wing window strongly recommended."}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Score reflects ride comfort, not safety.
+                          </p>
+                        </div>
 
                         <Button
                           variant="ghost"
@@ -357,6 +369,9 @@ const Results = () => {
             })}
           </div>
         )}
+
+        {/* Scoring Explainer */}
+        {!loading && !error && flights.length > 0 && <ScoringExplainer />}
       </main>
 
       {/* Footer */}
