@@ -12,6 +12,9 @@ import { aircraftNote } from "@/lib/aircraftNotes";
 import ScoringExplainer from "@/components/ScoringExplainer";
 import { FilterSidebar, FilterState } from "@/components/FilterSidebar";
 import { getAirlineInfo } from "@/lib/airlineLogos";
+import ThermoScore from "@/components/ThermoScore";
+import SortBar, { SortKey } from "@/components/SortBar";
+import { formatDuration } from "@/lib/format";
 
 // Minimal IATA → lat/lon map
 const IATA: Record<string, { lat: number; lon: number; city?: string }> = {
@@ -85,6 +88,7 @@ const Results = () => {
     stops: [],
     departureTime: [],
   });
+  const [sortKey, setSortKey] = useState<SortKey>("smoothest");
 
   useEffect(() => {
     if (!origin || !destination || !date) {
@@ -175,6 +179,52 @@ const Results = () => {
     });
   }, [flights, filters, rtPenalty]);
 
+  // Sort flights based on selected sort key
+  const sortedFlights = useMemo(() => {
+    return [...filteredFlights].sort((a, b) => {
+      const aContrib = aircraftContribution(a.breakdown.aircraft);
+      const rContrib = routeContribution(a.breakdown.route);
+      const aTci = clamp01(aContrib + rContrib - (rtPenalty ?? 0));
+      
+      const bContribA = aircraftContribution(b.breakdown.aircraft);
+      const bContribR = routeContribution(b.breakdown.route);
+      const bTci = clamp01(bContribA + bContribR - (rtPenalty ?? 0));
+      
+      const aDuration = (new Date(a.arriveTime).getTime() - new Date(a.departTime).getTime()) / 60000;
+      const bDuration = (new Date(b.arriveTime).getTime() - new Date(b.departTime).getTime()) / 60000;
+      
+      switch (sortKey) {
+        case "cheapest":
+          return a.price - b.price;
+        case "earliest":
+          return new Date(a.departTime).getTime() - new Date(b.departTime).getTime();
+        case "shortest":
+          return aDuration - bDuration;
+        case "smoothest":
+        default:
+          return bTci - aTci;
+      }
+    });
+  }, [filteredFlights, sortKey, rtPenalty]);
+
+  // Calculate median price for "best choice" detection
+  const medianPrice = useMemo(() => {
+    const prices = flights.map(f => f.price).sort((a, b) => a - b);
+    return prices[Math.floor(prices.length / 2)] ?? 0;
+  }, [flights]);
+
+  const isBestChoice = (flight: Flight, tciAdjusted: number) => {
+    const rank = sortedFlights.findIndex(f => {
+      const aContrib = aircraftContribution(f.breakdown.aircraft);
+      const rContrib = routeContribution(f.breakdown.route);
+      const fTci = clamp01(aContrib + rContrib - (rtPenalty ?? 0));
+      return fTci === tciAdjusted;
+    });
+    const isTop10 = rank >= 0 && rank <= Math.max(0, Math.floor(sortedFlights.length * 0.1));
+    const isGoodPrice = flight.price <= medianPrice;
+    return isTop10 && isGoodPrice;
+  };
+
   const toggleExpanded = (flightId: string) => {
     setExpandedFlights((prev) => {
       const next = new Set(prev);
@@ -250,11 +300,14 @@ const Results = () => {
           {/* Main Content */}
           <div className="flex-1 min-w-0">
 
-            {/* Results count */}
+            {/* Sort controls and results count */}
             {!loading && !error && filteredFlights.length > 0 && (
-              <div className="mb-4 text-sm text-muted-foreground">
-                Showing {filteredFlights.length} of {flights.length} flights
-              </div>
+              <>
+                <SortBar value={sortKey} onChange={setSortKey} />
+                <div className="mb-4 text-sm text-muted-foreground">
+                  Showing {filteredFlights.length} of {flights.length} flights
+                </div>
+              </>
             )}
 
         {/* Loading State */}
@@ -312,9 +365,9 @@ const Results = () => {
         )}
 
         {/* Flights List */}
-        {!loading && !error && filteredFlights.length > 0 && (
+        {!loading && !error && sortedFlights.length > 0 && (
           <div className="space-y-4">
-            {filteredFlights.map((flight) => {
+            {sortedFlights.map((flight) => {
               const flightId = `${flight.flightNumber}-${flight.departTime}`;
               const isExpanded = expandedFlights.has(flightId);
 
@@ -325,124 +378,88 @@ const Results = () => {
               const tciAdjusted = clamp01(aContrib + rContrib - realtimeAdj);
               const label = humanLabel(tciAdjusted);
               const conf = computeConfidence(date, rtPenalty != null);
+              const durationMin = (new Date(flight.arriveTime).getTime() - new Date(flight.departTime).getTime()) / 60000;
 
               return (
                 <Card key={flightId} className="overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg">
                   <div className="p-6">
-                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                      {/* Left: Airline Logo + Flight Info */}
-                      <div className="flex gap-4 flex-1">
-                        {/* Airline Logo */}
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-card border">
-                          <img
-                            src={getAirlineInfo(flight.airline).logoUrl}
-                            alt={`${flight.airline} logo`}
-                            className="h-10 w-10 object-contain"
-                            onError={(e) => {
-                              // Fallback to colored badge if logo fails to load
-                              const target = e.currentTarget;
-                              const parent = target.parentElement;
-                              if (parent) {
-                                parent.style.backgroundColor = getAirlineInfo(flight.airline).bgColor;
-                                parent.style.color = getAirlineInfo(flight.airline).color;
-                                parent.textContent = getAirlineInfo(flight.airline).code;
-                              }
-                            }}
-                          />
-                        </div>
-
-                        {/* Flight Details */}
-                        <div className="flex-1 space-y-2">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-base font-semibold text-foreground">{flight.airline}</h3>
-                              <span className="text-xs text-muted-foreground">
-                                {flight.flightNumber}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {flight.aircraftIcao}
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {aircraftNote(flight.aircraftIcao)}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center gap-4 text-base">
-                            <div>
-                              <div className="font-bold text-foreground">{formatTime(flight.departTime)}</div>
-                              <div className="text-xs text-muted-foreground">{flight.origin}</div>
-                            </div>
-                            <div className="flex-1 text-center text-sm text-muted-foreground">
-                              Nonstop
-                            </div>
-                            <div className="text-right">
-                              <div className="font-bold text-foreground">{formatTime(flight.arriveTime)}</div>
-                              <div className="text-xs text-muted-foreground">{flight.destination}</div>
-                            </div>
-                          </div>
-                        </div>
+                    {/* Optional Best Choice ribbon */}
+                    {isBestChoice(flight, tciAdjusted) && (
+                      <div className="mb-2 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+                        ⭐ Best balance of comfort & price
                       </div>
+                    )}
 
-                      {/* Right: Price + Smoothness Score */}
-                      <div className="flex flex-col items-end gap-3 lg:w-64">
-                        {/* Price */}
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-foreground">
-                            ${flight.price}
-                          </div>
-                          <div className="text-xs text-muted-foreground">per person</div>
-                        </div>
-
-                        {/* Smoothness Score */}
-                        <div className="flex flex-wrap items-center justify-end gap-2">
-                          <div className="rounded-full border border-border bg-background px-3 py-1.5 text-sm font-bold">
-                            {tciAdjusted} · {label}
-                          </div>
-                          <div className="rounded-full border border-border bg-muted px-2 py-1 text-xs font-medium">
-                            {conf}
-                          </div>
-                          {realtimeAdj > 0 && (
-                            <div className="rounded-full border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900">
-                              −{realtimeAdj}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Felt-experience sentence */}
-                        <div className="text-right space-y-1">
-                          <p className="text-sm text-muted-foreground">
-                            {tciAdjusted >= 85
-                              ? "Glass-smooth; aisle seats fine."
-                              : tciAdjusted >= 70
-                              ? "Occasional light bumps; aisle OK."
-                              : tciAdjusted >= 55
-                              ? "Choppy; pick window over wing."
-                              : "Rough; over-wing window strongly recommended."}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Score reflects ride comfort, not safety.
-                          </p>
-                        </div>
-
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => toggleExpanded(flightId)}
-                          className="text-xs text-muted-foreground hover:text-foreground"
-                        >
-                          {isExpanded ? (
-                            <>
-                              Hide Details <ChevronUp className="ml-1 h-4 w-4" />
-                            </>
-                          ) : (
-                            <>
-                              Why? <ChevronDown className="ml-1 h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
+                    {/* Top row: airline • stops • aircraft */}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm text-neutral-600">
+                        <span className="font-medium text-neutral-900">{flight.airline}</span>
+                        {" • Nonstop"}
+                        {" • "}{flight.aircraftIcao}
                       </div>
                     </div>
+
+                    {/* Times + duration + score + price */}
+                    <div className="flex items-end justify-between gap-4 mb-2">
+                      <div className="flex items-baseline gap-3">
+                        <div className="text-lg font-semibold">{formatTime(flight.departTime)}</div>
+                        <span className="text-neutral-400">→</span>
+                        <div className="text-lg font-semibold">{formatTime(flight.arriveTime)}</div>
+                        <div className="text-sm text-neutral-600">
+                          ({formatDuration(durationMin)})
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6">
+                        <ThermoScore
+                          score={tciAdjusted}
+                          label={label}
+                          width={140}
+                          height={10}
+                        />
+                        <div className="text-right">
+                          <div className="text-xl font-semibold">${flight.price}</div>
+                          <div className="text-xs text-neutral-500">per person</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Confidence + quick feel sentence */}
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs rounded-full bg-neutral-100 px-2 py-0.5">
+                        Confidence: {conf}
+                      </div>
+                      <div className="text-sm text-neutral-600">
+                        {tciAdjusted >= 85
+                          ? "Glass-smooth; aisle seats fine."
+                          : tciAdjusted >= 70
+                          ? "Occasional light bumps; aisle OK."
+                          : tciAdjusted >= 55
+                          ? "Choppy; pick window over wing."
+                          : "Rough; over-wing window strongly recommended."}
+                      </div>
+                    </div>
+
+                    <p className="mt-1 text-xs text-neutral-500">
+                      This score reflects expected in-seat ride comfort. All commercial flights are safe.
+                    </p>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleExpanded(flightId)}
+                      className="mt-4 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      {isExpanded ? (
+                        <>
+                          Hide Details <ChevronUp className="ml-1 h-4 w-4" />
+                        </>
+                      ) : (
+                        <>
+                          Why? <ChevronDown className="ml-1 h-4 w-4" />
+                        </>
+                      )}
+                    </Button>
 
                     {/* Breakdown Details */}
                     {isExpanded && (
