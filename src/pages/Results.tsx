@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link, useSearchParams, useParams, useLocation } from "react-router-dom";
-import { Plane, ChevronDown, ChevronUp } from "lucide-react";
+import { Cloud, ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState, useMemo } from "react";
 import { mockFlights, Flight } from "@/lib/mockFlights";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -273,7 +273,7 @@ const Results = () => {
       <header className="border-b bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <Plane className="h-6 w-6 text-primary" />
+            <Cloud className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold text-foreground">SmoothSky</h1>
           </Link>
           <Link to="/search">

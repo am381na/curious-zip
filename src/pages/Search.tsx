@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
-import { Plane, Search as SearchIcon, ArrowLeftRight, Users, ChevronDown } from "lucide-react";
+import { Cloud, Search as SearchIcon, ArrowLeftRight, Users, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { AirportCombobox } from "@/components/AirportCombobox";
 import {
@@ -52,7 +52,7 @@ const Search = () => {
       <header className="border-b bg-card">
         <div className="container mx-auto flex items-center justify-between px-6 py-4">
           <Link to="/" className="flex items-center gap-2">
-            <Plane className="h-6 w-6 text-primary" />
+            <Cloud className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold text-foreground">SmoothSky</h1>
           </Link>
         </div>

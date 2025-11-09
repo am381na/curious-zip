@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Link, useNavigate } from "react-router-dom";
-import { Plane, CloudRain, Calendar, ArrowLeftRight, Users, Search as SearchIcon } from "lucide-react";
+import { Cloud, CloudRain, Calendar, ArrowLeftRight, Users, Search as SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { AirportCombobox } from "@/components/AirportCombobox";
 import {
@@ -50,7 +50,7 @@ const Home = () => {
       <header className="border-b bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto flex items-center justify-between px-4 py-4">
           <div className="flex items-center gap-2">
-            <Plane className="h-6 w-6 text-primary" />
+            <Cloud className="h-6 w-6 text-primary" />
             <h1 className="text-xl font-bold text-foreground">SmoothSky</h1>
           </div>
           <Link to="/search">
@@ -188,7 +188,7 @@ const Home = () => {
             <Card className="rounded-2xl border-2 p-6 transition-all hover:shadow-lg">
               <div className="mb-4 flex justify-center">
                 <div className="rounded-full bg-primary/10 p-4">
-                  <Plane className="h-8 w-8 text-primary" />
+                  <Cloud className="h-8 w-8 text-primary" />
                 </div>
               </div>
               <h3 className="mb-2 text-lg font-semibold text-foreground">Aircraft Comfort</h3>
