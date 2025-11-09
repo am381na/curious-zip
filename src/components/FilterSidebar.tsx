@@ -37,10 +37,7 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
   };
 
   const handleSmoothnessChange = (value: number[]) => {
-    console.log('Slider value changing:', value);
-    if (value && value.length === 2) {
-      onFiltersChange({ ...filters, smoothnessRange: [value[0], value[1]] });
-    }
+    onFiltersChange({ ...filters, smoothnessRange: [value[0], value[1]] });
   };
 
   const handleAirlineToggle = (airline: string) => {
