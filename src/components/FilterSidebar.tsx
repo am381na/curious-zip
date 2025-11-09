@@ -117,8 +117,8 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
       <FilterSection id="smoothness" title="Flight Smoothness">
         <div className="space-y-4">
           <div className="flex items-center justify-between text-sm font-medium text-foreground">
-            <span>{filters.smoothnessRange[0]}</span>
-            <span>{filters.smoothnessRange[1]}</span>
+            <span>Rough</span>
+            <span>Smooth</span>
           </div>
           <Slider
             min={0}
@@ -129,8 +129,8 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
             className="w-full"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Rough</span>
-            <span>Glass-Smooth</span>
+            <span>{filters.smoothnessRange[0]}</span>
+            <span>{filters.smoothnessRange[1]}</span>
           </div>
         </div>
       </FilterSection>
