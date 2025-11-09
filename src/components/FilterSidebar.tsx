@@ -19,7 +19,7 @@ interface FilterSidebarProps {
   availableAirlines: string[];
 }
 
-export const FilterSidebar = React.memo(function FilterSidebar({ filters, onFiltersChange, availableAirlines }: FilterSidebarProps) {
+const FilterSidebarComponent = ({ filters, onFiltersChange, availableAirlines }: FilterSidebarProps) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["smoothness", "airlines", "stops"])
   );
@@ -281,4 +281,6 @@ export const FilterSidebar = React.memo(function FilterSidebar({ filters, onFilt
       </FilterSection>
     </div>
   );
-});
+};
+
+export const FilterSidebar = React.memo(FilterSidebarComponent);
