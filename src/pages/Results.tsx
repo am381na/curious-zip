@@ -11,7 +11,7 @@ import { estimateRealtimePenalty } from "@/lib/realtime";
 import { aircraftNote } from "@/lib/aircraftNotes";
 import ScoringExplainer from "@/components/ScoringExplainer";
 import { FilterSidebar, FilterState } from "@/components/FilterSidebar";
-import { getAirlineInfo } from "@/lib/airlineLogos";
+import AirlineBadge from "@/components/AirlineBadge";
 import ThermoScore from "@/components/ThermoScore";
 import SortBar, { SortKey } from "@/components/SortBar";
 import { formatDuration } from "@/lib/format";
@@ -392,10 +392,11 @@ const Results = () => {
 
                     {/* Top row: airline • stops • aircraft */}
                     <div className="flex items-center justify-between mb-2">
-                      <div className="text-sm text-neutral-600">
+                      <div className="flex items-center gap-2 text-sm text-neutral-600">
+                        <AirlineBadge name={flight.airline} size={28} showName={false} />
                         <span className="font-medium text-neutral-900">{flight.airline}</span>
-                        {" • Nonstop"}
-                        {" • "}{flight.aircraftIcao}
+                        <span>• Nonstop</span>
+                        <span>• {flight.aircraftIcao}</span>
                       </div>
                     </div>
 

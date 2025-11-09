@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { getAirlineInfo } from "@/lib/airlineLogos";
+import AirlineBadge from "@/components/AirlineBadge";
 
 export interface FilterState {
   smoothnessRange: [number, number];
@@ -180,7 +180,6 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
             <p className="text-sm text-muted-foreground">No airlines available</p>
           ) : (
             availableAirlines.map((airline) => {
-              const info = getAirlineInfo(airline);
               const isChecked = filters.airlines.length === 0 || filters.airlines.includes(airline);
               
               return (
@@ -194,23 +193,7 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
                     htmlFor={`airline-${airline}`}
                     className="flex items-center gap-2 text-sm font-normal cursor-pointer flex-1"
                   >
-                    <div 
-                      className="flex h-7 w-10 items-center justify-center rounded overflow-hidden"
-                      style={{ backgroundColor: info.bgColor }}
-                    >
-                      <img
-                        src={info.logoUrl}
-                        alt={`${airline} logo`}
-                        className="h-6 w-9 object-contain"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                          const parent = e.currentTarget.parentElement;
-                          if (parent) {
-                            parent.innerHTML = `<span class="text-xs font-bold" style="color: ${info.color}">${info.code}</span>`;
-                          }
-                        }}
-                      />
-                    </div>
+                    <AirlineBadge name={airline} size={24} codeOnly />
                     <span>{airline}</span>
                   </Label>
                 </div>
