@@ -301,7 +301,7 @@ const Results = () => {
         <div className="flex gap-6">
           {/* Sidebar Filters */}
           <aside className="hidden lg:block w-80 shrink-0">
-            <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <div className="sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto pb-4 scrollbar-sidebar">
               <FilterSidebar
                 filters={filters}
                 onFiltersChange={setFilters}
