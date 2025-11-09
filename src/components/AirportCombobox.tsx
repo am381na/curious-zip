@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,10 +40,25 @@ export function AirportCombobox({
   id,
 }: AirportComboboxProps) {
   const [open, setOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const selectedAirport = airports.find(
     (airport) => airport.code === value
   );
+
+  const filteredAirports = useMemo(() => {
+    if (!searchQuery) return airports;
+
+    const query = searchQuery.toLowerCase().trim();
+    
+    return airports.filter((airport) => {
+      const codeMatch = airport.code.toLowerCase().startsWith(query);
+      const cityMatch = airport.city.toLowerCase().includes(query);
+      const nameMatch = airport.name.toLowerCase().includes(query);
+      
+      return codeMatch || cityMatch || nameMatch;
+    });
+  }, [searchQuery]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -64,17 +79,22 @@ export function AirportCombobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
-        <Command>
-          <CommandInput placeholder="Search airport or city..." />
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder="Search airport or city..." 
+            value={searchQuery}
+            onValueChange={setSearchQuery}
+          />
           <CommandList>
             <CommandEmpty>No airport found.</CommandEmpty>
             <CommandGroup>
-              {airports.map((airport) => (
+              {filteredAirports.map((airport) => (
                 <CommandItem
                   key={airport.code}
-                  value={`${airport.code} ${airport.name} ${airport.city} ${airport.country}`}
+                  value={airport.code}
                   onSelect={() => {
                     onValueChange(airport.code);
+                    setSearchQuery("");
                     setOpen(false);
                   }}
                 >
