@@ -390,77 +390,79 @@ const Results = () => {
                       </div>
                     )}
 
-                    {/* Top row: airline • stops • aircraft */}
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2 text-sm text-neutral-600">
-                        <AirlineBadge name={flight.airline} size={28} codeOnly />
-                        <span className="font-medium text-neutral-900">{flight.airline}</span>
-                        <span>• Nonstop</span>
-                        <span>• {flight.aircraftIcao}</span>
-                      </div>
-                    </div>
-
-                    {/* Times + duration + score + price */}
-                    <div className="flex items-end justify-between gap-4 mb-2">
-                      <div className="flex items-baseline gap-3">
-                        <div className="text-lg font-semibold">{formatTime(flight.departTime)}</div>
-                        <span className="text-neutral-400">→</span>
-                        <div className="text-lg font-semibold">{formatTime(flight.arriveTime)}</div>
-                        <div className="text-sm text-neutral-600">
-                          ({formatDuration(durationMin)})
+                    {/* Top row: airline info left, turbulence score + confidence + why button right */}
+                    <div className="flex items-start justify-between mb-3 gap-6">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 text-sm text-neutral-600 mb-3">
+                          <AirlineBadge name={flight.airline} size={28} codeOnly />
+                          <span className="font-medium text-neutral-900">{flight.airline}</span>
+                          <span>• Nonstop</span>
+                          <span>• {flight.aircraftIcao}</span>
                         </div>
-                      </div>
 
-                      <div className="flex items-center gap-6">
-                        <ThermoScore
-                          score={tciAdjusted}
-                          label={label}
-                          width={140}
-                          height={10}
-                        />
-                        <div className="text-right">
-                          <div className="text-xl font-semibold">${flight.price}</div>
-                          <div className="text-xs text-neutral-500">per person</div>
+                        {/* Times + duration + price */}
+                        <div className="flex items-end justify-between gap-4 mb-2">
+                          <div className="flex items-baseline gap-3">
+                            <div className="text-lg font-semibold">{formatTime(flight.departTime)}</div>
+                            <span className="text-neutral-400">→</span>
+                            <div className="text-lg font-semibold">{formatTime(flight.arriveTime)}</div>
+                            <div className="text-sm text-neutral-600">
+                              ({formatDuration(durationMin)})
+                            </div>
+                          </div>
+
+                          <div className="text-right">
+                            <div className="text-xl font-semibold">${flight.price}</div>
+                            <div className="text-xs text-neutral-500">per person</div>
+                          </div>
                         </div>
+
+                        {/* Quick feel sentence */}
+                        <div className="text-sm text-neutral-600 mb-1">
+                          {tciAdjusted >= 85
+                            ? "Glass-smooth; aisle seats fine."
+                            : tciAdjusted >= 70
+                            ? "Occasional light bumps; aisle OK."
+                            : tciAdjusted >= 55
+                            ? "Choppy; pick window over wing."
+                            : "Rough; over-wing window strongly recommended."}
+                        </div>
+
+                        <p className="text-xs text-neutral-500">
+                          This score reflects expected in-seat ride comfort. All commercial flights are safe.
+                        </p>
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-2 shrink-0">
+                        <div className="flex items-center gap-3">
+                          <ThermoScore
+                            score={tciAdjusted}
+                            label={label}
+                            width={140}
+                            height={10}
+                          />
+                        </div>
+                        <div className="text-xs rounded-full bg-neutral-100 px-2 py-1 whitespace-nowrap">
+                          Confidence: {conf}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleExpanded(flightId)}
+                          className="text-xs text-muted-foreground hover:text-foreground"
+                        >
+                          {isExpanded ? (
+                            <>
+                              Hide Details <ChevronUp className="ml-1 h-4 w-4" />
+                            </>
+                          ) : (
+                            <>
+                              Why? <ChevronDown className="ml-1 h-4 w-4" />
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </div>
-
-                    {/* Confidence + quick feel sentence */}
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs rounded-full bg-neutral-100 px-2 py-0.5">
-                        Confidence: {conf}
-                      </div>
-                      <div className="text-sm text-neutral-600">
-                        {tciAdjusted >= 85
-                          ? "Glass-smooth; aisle seats fine."
-                          : tciAdjusted >= 70
-                          ? "Occasional light bumps; aisle OK."
-                          : tciAdjusted >= 55
-                          ? "Choppy; pick window over wing."
-                          : "Rough; over-wing window strongly recommended."}
-                      </div>
-                    </div>
-
-                    <p className="mt-1 text-xs text-neutral-500">
-                      This score reflects expected in-seat ride comfort. All commercial flights are safe.
-                    </p>
-
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleExpanded(flightId)}
-                      className="mt-4 text-xs text-muted-foreground hover:text-foreground"
-                    >
-                      {isExpanded ? (
-                        <>
-                          Hide Details <ChevronUp className="ml-1 h-4 w-4" />
-                        </>
-                      ) : (
-                        <>
-                          Why? <ChevronDown className="ml-1 h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
 
                     {/* Breakdown Details */}
                     {isExpanded && (
