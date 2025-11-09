@@ -7,11 +7,12 @@ const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
 >(({ className, ...props }, ref) => {
-  const initialValue = Array.isArray(props.value) 
-    ? props.value 
-    : props.defaultValue && Array.isArray(props.defaultValue)
-    ? props.defaultValue
-    : [props.min ?? 0, props.max ?? 100];
+  // Determine number of thumbs from value/defaultValue
+  const thumbCount = Array.isArray(props.value) 
+    ? props.value.length 
+    : Array.isArray(props.defaultValue)
+    ? props.defaultValue.length
+    : 1;
 
   return (
     <SliderPrimitive.Root
@@ -22,10 +23,10 @@ const Slider = React.forwardRef<
       <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
         <SliderPrimitive.Range className="absolute h-full bg-primary" />
       </SliderPrimitive.Track>
-      {initialValue.map((_, index) => (
+      {Array.from({ length: thumbCount }).map((_, index) => (
         <SliderPrimitive.Thumb 
           key={index}
-          className="block h-6 w-6 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing shadow-md" 
+          className="block h-6 w-6 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 cursor-grab active:cursor-grabbing shadow-md hover:scale-110" 
         />
       ))}
     </SliderPrimitive.Root>
