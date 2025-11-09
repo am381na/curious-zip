@@ -1,0 +1,16 @@
+{
+  "months": [
+    { "month": 1, "roughness": 25 },
+    { "month": 2, "roughness": 28 },
+    { "month": 3, "roughness": 30 },
+    { "month": 4, "roughness": 28 },
+    { "month": 5, "roughness": 25 },
+    { "month": 6, "roughness": 22 },
+    { "month": 7, "roughness": 20 },
+    { "month": 8, "roughness": 20 },
+    { "month": 9, "roughness": 22 },
+    { "month": 10, "roughness": 25 },
+    { "month": 11, "roughness": 28 },
+    { "month": 12, "roughness": 30 }
+  ]
+}
