@@ -6,6 +6,52 @@ import { useEffect, useState } from "react";
 import { mockFlights, Flight } from "@/lib/mockFlights";
 import { SmoothnessBadge } from "@/components/SmoothnesseBadge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { computeConfidence } from "@/lib/confidence";
+import { humanLabel, explainResult } from "@/lib/explain";
+import { estimateRealtimePenalty } from "@/lib/realtime";
+
+// Minimal IATA → lat/lon map
+const IATA: Record<string, { lat: number; lon: number; city?: string }> = {
+  LAX: { lat: 33.9425, lon: -118.4081, city: "Los Angeles" },
+  LHR: { lat: 51.4700, lon: -0.4543, city: "London" },
+  JFK: { lat: 40.6413, lon: -73.7781, city: "New York" },
+  MIA: { lat: 25.7959, lon: -80.2870, city: "Miami" },
+  BOG: { lat: 4.7016, lon: -74.1469, city: "Bogotá" },
+  ATL: { lat: 33.6407, lon: -84.4277, city: "Atlanta" },
+  ORD: { lat: 41.9742, lon: -87.9073, city: "Chicago" },
+  DFW: { lat: 32.8998, lon: -97.0403, city: "Dallas" },
+  DEN: { lat: 39.8561, lon: -104.6737, city: "Denver" },
+  SFO: { lat: 37.6213, lon: -122.3790, city: "San Francisco" },
+  SEA: { lat: 47.4502, lon: -122.3088, city: "Seattle" },
+  LAS: { lat: 36.0840, lon: -115.1537, city: "Las Vegas" },
+  MCO: { lat: 28.4312, lon: -81.3081, city: "Orlando" },
+  EWR: { lat: 40.6895, lon: -74.1745, city: "Newark" },
+  MSP: { lat: 44.8820, lon: -93.2218, city: "Minneapolis" },
+  BOS: { lat: 42.3656, lon: -71.0096, city: "Boston" },
+  PHL: { lat: 39.8729, lon: -75.2437, city: "Philadelphia" },
+  PHX: { lat: 33.4352, lon: -112.0101, city: "Phoenix" },
+  IAH: { lat: 29.9902, lon: -95.3368, city: "Houston" },
+  CLT: { lat: 35.2144, lon: -80.9473, city: "Charlotte" },
+  CDG: { lat: 49.0097, lon: 2.5479, city: "Paris" },
+  AMS: { lat: 52.3105, lon: 4.7683, city: "Amsterdam" },
+  FRA: { lat: 50.0379, lon: 8.5622, city: "Frankfurt" },
+  MAD: { lat: 40.4983, lon: -3.5676, city: "Madrid" },
+  BCN: { lat: 41.2974, lon: 2.0833, city: "Barcelona" },
+  FCO: { lat: 41.8003, lon: 12.2389, city: "Rome" },
+  IST: { lat: 40.9769, lon: 28.8146, city: "Istanbul" },
+  DXB: { lat: 25.2532, lon: 55.3657, city: "Dubai" },
+  SIN: { lat: 1.3644, lon: 103.9915, city: "Singapore" },
+  HKG: { lat: 22.3080, lon: 113.9185, city: "Hong Kong" },
+  NRT: { lat: 35.7653, lon: 140.3863, city: "Tokyo" },
+  ICN: { lat: 37.4602, lon: 126.4407, city: "Seoul" },
+  SYD: { lat: -33.9399, lon: 151.1753, city: "Sydney" },
+  MEL: { lat: -37.6690, lon: 144.8410, city: "Melbourne" },
+  YYZ: { lat: 43.6777, lon: -79.6248, city: "Toronto" },
+  YVR: { lat: 49.1967, lon: -123.1815, city: "Vancouver" },
+  GRU: { lat: -23.4356, lon: -46.4731, city: "São Paulo" },
+  MEX: { lat: 19.4363, lon: -99.0721, city: "Mexico City" },
+  MDE: { lat: 6.1698, lon: -75.4233, city: "Medellín" },
+};
 
 const Results = () => {
   const location = useLocation();
@@ -29,6 +75,7 @@ const Results = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [expandedFlights, setExpandedFlights] = useState<Set<string>>(new Set());
+  const [rtPenalty, setRtPenalty] = useState<number | null>(null);
 
   useEffect(() => {
     if (!origin || !destination || !date) {
@@ -51,6 +98,20 @@ const Results = () => {
         setLoading(false);
       }
     }, 800);
+  }, [origin, destination, date]);
+
+  // Fetch real-time wind penalty
+  useEffect(() => {
+    const o = IATA[origin], d = IATA[destination];
+    if (!o || !d) { 
+      setRtPenalty(null); 
+      return; 
+    }
+    estimateRealtimePenalty({
+      origin: { lat: o.lat, lon: o.lon },
+      destination: { lat: d.lat, lon: d.lon },
+      dateISO: date
+    }).then(setRtPenalty).catch(() => setRtPenalty(null));
   }, [origin, destination, date]);
 
   const toggleExpanded = (flightId: string) => {
@@ -157,6 +218,12 @@ const Results = () => {
               const flightId = `${flight.flightNumber}-${flight.departTime}`;
               const isExpanded = expandedFlights.has(flightId);
 
+              // Post-adjust TCI based on real-time penalty
+              const appliedPenalty = rtPenalty ?? 0;
+              const tciAdjusted = Math.max(0, Math.min(100, flight.tci - appliedPenalty));
+              const bucketAdjusted = humanLabel(tciAdjusted);
+              const confidence = computeConfidence(date, rtPenalty != null);
+
               return (
                 <Card key={flightId} className="overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg">
                   <div className="p-6">
@@ -186,9 +253,21 @@ const Results = () => {
                         </div>
                       </div>
 
-                      {/* Smoothness Badge */}
-                      <div className="flex flex-col items-center gap-2">
-                        <SmoothnessBadge tci={flight.tci} bucket={flight.bucket} />
+                      {/* Smoothness Badge & Chips */}
+                      <div className="flex flex-col items-end gap-3">
+                        <SmoothnessBadge tci={tciAdjusted} bucket={bucketAdjusted as any} />
+                        
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          <div className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
+                            Confidence: {confidence}
+                          </div>
+                          {rtPenalty != null && rtPenalty > 0 && (
+                            <div className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
+                              Realtime (beta): −{rtPenalty} pts
+                            </div>
+                          )}
+                        </div>
+
                         <Button
                           variant="ghost"
                           size="sm"
@@ -256,8 +335,19 @@ const Results = () => {
                           </div>
                         </div>
 
+                        <p className="mt-3 text-sm text-muted-foreground">
+                          {explainResult({ 
+                            tci: tciAdjusted, 
+                            bucket: bucketAdjusted as any, 
+                            breakdown: flight.breakdown 
+                          })}
+                        </p>
+
                         <div className="mt-4 rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
                           <strong className="text-foreground">TCI Formula:</strong> Aircraft (40%) + Route (60%)
+                          <p className="mt-2">
+                            TCI shown = Historical score ± Realtime (beta). Confidence is based on forecast horizon.
+                          </p>
                         </div>
                       </div>
                     )}
