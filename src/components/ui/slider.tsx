@@ -6,14 +6,15 @@ import { cn } from "@/lib/utils"
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
->(({ className, ...props }, ref) => {
-  // Determine thumb count from value array
-  const valueArray = props.value || props.defaultValue || [props.min || 0, props.max || 100];
-  const thumbCount = Array.isArray(valueArray) ? valueArray.length : 1;
+>(({ className, value, defaultValue, ...props }, ref) => {
+  // Always render 2 thumbs for range slider stability
+  const thumbCount = 2;
   
   return (
     <SliderPrimitive.Root
       ref={ref}
+      value={value as number[] | undefined}
+      defaultValue={defaultValue as number[] | undefined}
       className={cn(
         "relative flex w-full touch-none select-none items-center",
         className

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -24,6 +24,16 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
     new Set(["smoothness", "airlines", "stops"])
   );
 
+  // Local state for smooth slider dragging
+  const [localRange, setLocalRange] = useState<[number, number]>(
+    filters.smoothnessRange ?? [0, 100]
+  );
+
+  // Sync local state when external filters change
+  useEffect(() => {
+    setLocalRange(filters.smoothnessRange ?? [0, 100]);
+  }, [filters.smoothnessRange]);
+
   const toggleSection = (section: string) => {
     setExpandedSections((prev) => {
       const next = new Set(prev);
@@ -36,9 +46,16 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
     });
   };
 
+  // Update local state during drag (no parent re-render)
   const handleSmoothnessChange = (value: number[]) => {
-    onFiltersChange({ ...filters, smoothnessRange: [value[0], value[1]] });
+    setLocalRange([value[0], value[1]]);
   };
+
+  // Commit to parent only on release
+  const commitSmoothness = useCallback((value: number[]) => {
+    const next: [number, number] = [value[0], value[1]];
+    onFiltersChange({ ...filters, smoothnessRange: next });
+  }, [filters, onFiltersChange]);
 
   const handleAirlineToggle = (airline: string) => {
     const newAirlines = filters.airlines.includes(airline)
@@ -125,14 +142,15 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
               min={0}
               max={100}
               step={1}
-              value={filters.smoothnessRange}
+              value={localRange}
               onValueChange={handleSmoothnessChange}
+              onValueCommit={commitSmoothness}
               className="w-full"
             />
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{filters.smoothnessRange[0]}</span>
-            <span>{filters.smoothnessRange[1]}</span>
+            <span>{localRange[0]}</span>
+            <span>{localRange[1]}</span>
           </div>
         </div>
       </FilterSection>
