@@ -88,7 +88,7 @@ const Results = () => {
     stops: [],
     departureTime: [],
   });
-  const [sortKey, setSortKey] = useState<SortKey>("best");
+  const [sortKey, setSortKey] = useState<SortKey>("smoothest");
 
   useEffect(() => {
     if (!origin || !destination || !date) {
@@ -194,16 +194,6 @@ const Results = () => {
       const bDuration = (new Date(b.arriveTime).getTime() - new Date(b.departTime).getTime()) / 60000;
       
       switch (sortKey) {
-        case "best":
-          // Balance between smoothness and price (normalize both to 0-1 scale)
-          const aTciNorm = aTci;
-          const bTciNorm = bTci;
-          const maxPrice = Math.max(...filteredFlights.map(f => f.price));
-          const aPriceNorm = 1 - (a.price / maxPrice); // Invert so lower price = higher score
-          const bPriceNorm = 1 - (b.price / maxPrice);
-          const aScore = (aTciNorm * 0.6) + (aPriceNorm * 0.4); // 60% smoothness, 40% price
-          const bScore = (bTciNorm * 0.6) + (bPriceNorm * 0.4);
-          return bScore - aScore;
         case "cheapest":
           return a.price - b.price;
         case "earliest":

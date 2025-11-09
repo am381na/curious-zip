@@ -1,6 +1,6 @@
 import React from "react";
 
-export type SortKey = "best" | "smoothest" | "cheapest" | "earliest" | "shortest";
+export type SortKey = "smoothest" | "cheapest" | "earliest" | "shortest";
 
 export default function SortBar({
   value,
@@ -22,20 +22,12 @@ export default function SortBar({
   );
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-sm text-neutral-600">Sort by:</span>
-        {opt("best", "Best")}
-        {opt("smoothest", "Smoothest")}
-        {opt("cheapest", "Cheapest")}
-        {opt("earliest", "Earliest")}
-        {opt("shortest", "Shortest")}
-      </div>
-      {value === "best" && (
-        <p className="text-xs text-neutral-500">
-          Filtering by a balance between smoothest + cheapest
-        </p>
-      )}
+    <div className="mb-4 flex items-center gap-2">
+      <span className="text-sm text-neutral-600">Sort by:</span>
+      {opt("smoothest", "Smoothest")}
+      {opt("cheapest", "Cheapest")}
+      {opt("earliest", "Earliest")}
+      {opt("shortest", "Shortest")}
     </div>
   );
 }
