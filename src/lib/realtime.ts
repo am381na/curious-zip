@@ -56,8 +56,11 @@ export async function estimateRealtimePenalty(opts: {
   origin: { lat: number; lon: number };
   destination: { lat: number; lon: number };
   dateISO: string;
-}): Promise<number | null> {
+}): Promise<{ penalty: number; windKts: number } | null> {
   const s = await sampleWindNearMidpoint(opts);
   if (!s) return null;
-  return jetstreamPenaltyFromKnots(s.speedKts);
+  return { 
+    penalty: jetstreamPenaltyFromKnots(s.speedKts),
+    windKts: Math.round(s.speedKts)
+  };
 }

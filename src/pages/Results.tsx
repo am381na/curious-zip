@@ -82,6 +82,7 @@ const Results = () => {
   const [error, setError] = useState(false);
   const [expandedFlights, setExpandedFlights] = useState<Set<string>>(new Set());
   const [rtPenalty, setRtPenalty] = useState<number | null>(null);
+  const [windKts, setWindKts] = useState<number | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     smoothnessRange: [0, 100],
     airlines: [],
@@ -117,14 +118,26 @@ const Results = () => {
   useEffect(() => {
     const o = IATA[origin], d = IATA[destination];
     if (!o || !d) { 
-      setRtPenalty(null); 
+      setRtPenalty(null);
+      setWindKts(null);
       return; 
     }
     estimateRealtimePenalty({
       origin: { lat: o.lat, lon: o.lon },
       destination: { lat: d.lat, lon: d.lon },
       dateISO: date
-    }).then(setRtPenalty).catch(() => setRtPenalty(null));
+    }).then(result => {
+      if (result) {
+        setRtPenalty(result.penalty);
+        setWindKts(result.windKts);
+      } else {
+        setRtPenalty(null);
+        setWindKts(null);
+      }
+    }).catch(() => {
+      setRtPenalty(null);
+      setWindKts(null);
+    });
   }, [origin, destination, date]);
 
   // Get unique airlines from flights
@@ -384,6 +397,10 @@ const Results = () => {
               const now = new Date();
               const daysAhead = Math.max(0, Math.round((+flightDate - +now) / (24 * 3600 * 1000)));
               const durationMin = (new Date(flight.arriveTime).getTime() - new Date(flight.departTime).getTime()) / 60000;
+              
+              // For breakdown explanations
+              const monthName = flightDate.toLocaleDateString("en-US", { month: "long" });
+              const roughnessPercent = Math.round(100 - flight.breakdown.route);
 
               return (
                 <Card key={flightId} className="overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg">
@@ -483,14 +500,24 @@ const Results = () => {
                           <div className="text-xs font-semibold text-foreground mb-3">How we got {tciAdjusted}</div>
                           <div className="flex flex-col gap-2 text-sm">
                             <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">Aircraft contribution (40%)</span>
+                              <div className="flex flex-col">
+                                <span className="text-muted-foreground">Aircraft contribution (40%)</span>
+                                <span className="text-xs text-muted-foreground/70">
+                                  {flight.aircraftIcao} smoothness rating: {flight.breakdown.aircraft}/100 × 40% = +{aContrib}
+                                </span>
+                              </div>
                               <div className="flex items-center gap-2">
                                 <div className="h-2 rounded-full bg-primary" style={{ width: `${aContrib * 2}px` }}></div>
                                 <span className="font-medium text-foreground">+{aContrib}</span>
                               </div>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">Route history (60%)</span>
+                              <div className="flex flex-col">
+                                <span className="text-muted-foreground">Route history (60%)</span>
+                                <span className="text-xs text-muted-foreground/70">
+                                  {origin}→{destination} in {monthName}: {roughnessPercent}% rough → {flight.breakdown.route}/100 smooth × 60% = +{rContrib}
+                                </span>
+                              </div>
                               <div className="flex items-center gap-2">
                                 <div className="h-2 rounded-full bg-primary" style={{ width: `${rContrib * 2}px` }}></div>
                                 <span className="font-medium text-foreground">+{rContrib}</span>
@@ -500,11 +527,13 @@ const Results = () => {
                               <div className="flex flex-col">
                                 <span className="text-muted-foreground">Today's jet stream</span>
                                 <span className="text-xs text-muted-foreground/70">
-                                  {realtimeAdj > 0 
-                                    ? "(High winds → score reduced)" 
+                                  {realtimeAdj > 0 && windKts
+                                    ? `Wind speed: ${windKts} knots → ${realtimeAdj}pt penalty`
                                     : rtPenalty === null 
-                                      ? "(Data unavailable)" 
-                                      : "(Calm conditions)"}
+                                      ? "(Weather data unavailable)" 
+                                      : windKts !== null
+                                        ? `Wind speed: ${windKts} knots (calm)`
+                                        : "(Calm conditions)"}
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
