@@ -333,14 +333,22 @@ const Results = () => {
                       {/* Left: Airline Logo + Flight Info */}
                       <div className="flex gap-4 flex-1">
                         {/* Airline Logo */}
-                        <div
-                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded text-base font-bold"
-                          style={{
-                            backgroundColor: getAirlineInfo(flight.airline).bgColor,
-                            color: getAirlineInfo(flight.airline).color,
-                          }}
-                        >
-                          {getAirlineInfo(flight.airline).code}
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-card border">
+                          <img
+                            src={getAirlineInfo(flight.airline).logoUrl}
+                            alt={`${flight.airline} logo`}
+                            className="h-10 w-10 object-contain"
+                            onError={(e) => {
+                              // Fallback to colored badge if logo fails to load
+                              const target = e.currentTarget;
+                              const parent = target.parentElement;
+                              if (parent) {
+                                parent.style.backgroundColor = getAirlineInfo(flight.airline).bgColor;
+                                parent.style.color = getAirlineInfo(flight.airline).color;
+                                parent.textContent = getAirlineInfo(flight.airline).code;
+                              }
+                            }}
+                          />
                         </div>
 
                         {/* Flight Details */}

@@ -173,11 +173,24 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
                     htmlFor={`airline-${airline}`}
                     className="flex items-center gap-2 text-sm font-normal cursor-pointer flex-1"
                   >
-                    <div
-                      className="flex h-6 w-8 items-center justify-center rounded text-xs font-bold"
-                      style={{ backgroundColor: info.bgColor, color: info.color }}
-                    >
-                      {info.code}
+                    <div className="flex h-6 w-8 items-center justify-center rounded bg-card border">
+                      <img
+                        src={info.logoUrl}
+                        alt={`${airline} logo`}
+                        className="h-5 w-7 object-contain"
+                        onError={(e) => {
+                          // Fallback to colored badge if logo fails to load
+                          const target = e.currentTarget;
+                          const parent = target.parentElement;
+                          if (parent) {
+                            parent.style.backgroundColor = info.bgColor;
+                            parent.style.color = info.color;
+                            parent.textContent = info.code;
+                            parent.style.fontSize = '0.75rem';
+                            parent.style.fontWeight = 'bold';
+                          }
+                        }}
+                      />
                     </div>
                     <span>{airline}</span>
                   </Label>
