@@ -37,7 +37,10 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
   };
 
   const handleSmoothnessChange = (value: number[]) => {
-    onFiltersChange({ ...filters, smoothnessRange: [value[0], value[1]] });
+    console.log('Slider value changing:', value);
+    if (value && value.length === 2) {
+      onFiltersChange({ ...filters, smoothnessRange: [value[0], value[1]] });
+    }
   };
 
   const handleAirlineToggle = (airline: string) => {
@@ -120,14 +123,16 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
             <span>Rough</span>
             <span>Smooth</span>
           </div>
-          <Slider
-            min={0}
-            max={100}
-            step={5}
-            value={filters.smoothnessRange}
-            onValueChange={handleSmoothnessChange}
-            className="w-full"
-          />
+          <div className="px-2">
+            <Slider
+              min={0}
+              max={100}
+              step={1}
+              value={filters.smoothnessRange}
+              onValueChange={handleSmoothnessChange}
+              className="w-full"
+            />
+          </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{filters.smoothnessRange[0]}</span>
             <span>{filters.smoothnessRange[1]}</span>
