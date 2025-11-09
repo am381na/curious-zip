@@ -68,10 +68,10 @@ export function AirportCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="h-12 w-full justify-between text-lg font-normal"
+          className="h-12 w-full justify-between border-input bg-background text-left font-normal hover:bg-background hover:text-foreground"
         >
           {selectedAirport ? (
-            <span className="uppercase">{selectedAirport.code}</span>
+            <span className="font-medium uppercase">{selectedAirport.code}</span>
           ) : (
             <span className="text-muted-foreground">{placeholder}</span>
           )}
