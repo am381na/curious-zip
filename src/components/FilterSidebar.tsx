@@ -195,10 +195,21 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
                     className="flex items-center gap-2 text-sm font-normal cursor-pointer flex-1"
                   >
                     <div 
-                      className="flex h-6 w-9 items-center justify-center rounded text-xs font-bold"
-                      style={{ backgroundColor: info.bgColor, color: info.color }}
+                      className="flex h-7 w-10 items-center justify-center rounded overflow-hidden"
+                      style={{ backgroundColor: info.bgColor }}
                     >
-                      {info.code}
+                      <img
+                        src={info.logoUrl}
+                        alt={`${airline} logo`}
+                        className="h-6 w-9 object-contain"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            parent.innerHTML = `<span class="text-xs font-bold" style="color: ${info.color}">${info.code}</span>`;
+                          }
+                        }}
+                      />
                     </div>
                     <span>{airline}</span>
                   </Label>
