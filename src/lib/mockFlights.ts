@@ -1,4 +1,4 @@
-import { computeTCI } from "./scoring";
+import { computeTCI_legacy } from "./scoring";
 
 export interface Flight {
   origin: string;
@@ -56,7 +56,7 @@ export const mockFlights = (
     arriveDate.setHours(arriveDate.getHours() + duration);
 
     // Compute TCI
-    const scoring = computeTCI(aircraftIcao, origin, destination, date);
+    const scoring = computeTCI_legacy(aircraftIcao, origin, destination, date);
 
     flights.push({
       origin: origin.toUpperCase(),
