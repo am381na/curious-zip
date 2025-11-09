@@ -4,10 +4,9 @@ import { Link, useSearchParams, useParams, useLocation } from "react-router-dom"
 import { Plane, ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { mockFlights, Flight } from "@/lib/mockFlights";
-import { SmoothnessBadge } from "@/components/SmoothnesseBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { computeConfidence } from "@/lib/confidence";
-import { humanLabel, explainResult } from "@/lib/explain";
+import { humanLabel, aircraftContribution, routeContribution, clamp01 } from "@/lib/present";
 import { estimateRealtimePenalty } from "@/lib/realtime";
 
 // Minimal IATA → lat/lon map
@@ -218,11 +217,13 @@ const Results = () => {
               const flightId = `${flight.flightNumber}-${flight.departTime}`;
               const isExpanded = expandedFlights.has(flightId);
 
-              // Post-adjust TCI based on real-time penalty
-              const appliedPenalty = rtPenalty ?? 0;
-              const tciAdjusted = Math.max(0, Math.min(100, flight.tci - appliedPenalty));
-              const bucketAdjusted = humanLabel(tciAdjusted);
-              const confidence = computeConfidence(date, rtPenalty != null);
+              // Calculate contributions
+              const aContrib = aircraftContribution(flight.breakdown.aircraft);
+              const rContrib = routeContribution(flight.breakdown.route);
+              const realtimeAdj = rtPenalty ?? 0;
+              const tciAdjusted = clamp01(aContrib + rContrib - realtimeAdj);
+              const label = humanLabel(tciAdjusted);
+              const conf = computeConfidence(date, rtPenalty != null);
 
               return (
                 <Card key={flightId} className="overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg">
@@ -253,24 +254,24 @@ const Results = () => {
                         </div>
                       </div>
 
-                      {/* Smoothness Badge & Chips */}
+                      {/* Score & Decision Info */}
                       <div className="flex flex-col items-end gap-3">
-                        {/* Score chips row */}
+                        {/* Header chips */}
                         <div className="flex flex-wrap items-center justify-end gap-2">
-                          <div className="rounded-full border border-border bg-background px-3 py-1 text-sm font-semibold">
-                            {tciAdjusted} · {humanLabel(tciAdjusted)}
+                          <div className="rounded-full border border-border bg-background px-4 py-2 text-base font-bold">
+                            {tciAdjusted} · {label}
                           </div>
                           <div className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium">
-                            Confidence: {confidence}
+                            Confidence: {conf}
                           </div>
-                          {rtPenalty != null && rtPenalty > 0 && (
+                          {realtimeAdj > 0 && (
                             <div className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
-                              Realtime (beta): −{rtPenalty} pts
+                              Realtime (beta): −{realtimeAdj} pts
                             </div>
                           )}
                         </div>
 
-                        {/* Short "felt experience" subline under the badge */}
+                        {/* Felt-experience sentence */}
                         <p className="text-sm text-muted-foreground text-right">
                           {tciAdjusted >= 85
                             ? "Glass-smooth; aisle seats fine."
@@ -303,80 +304,51 @@ const Results = () => {
                     {/* Breakdown Details */}
                     {isExpanded && (
                       <div className="mt-6 border-t pt-6">
-                        <h4 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                          Score Breakdown
-                        </h4>
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                          <div className="rounded-lg bg-muted/50 p-4">
-                            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Aircraft
+                        {/* HOW WE GOT THIS NUMBER */}
+                        <div className="rounded-lg border bg-card/60 p-4">
+                          <div className="text-xs font-semibold text-foreground mb-3">How we got {tciAdjusted}</div>
+                          <div className="flex flex-col gap-2 text-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">Aircraft contribution (40%)</span>
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 rounded-full bg-primary" style={{ width: `${aContrib * 2}px` }}></div>
+                                <span className="font-medium text-foreground">+{aContrib}</span>
+                              </div>
                             </div>
-                            <div className="text-2xl font-bold text-foreground">{flight.breakdown.aircraft}</div>
-                            <div className="mt-1 text-xs text-muted-foreground">
-                              {flight.aircraftIcao} comfort rating
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">Route history (60%)</span>
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 rounded-full bg-primary" style={{ width: `${rContrib * 2}px` }}></div>
+                                <span className="font-medium text-foreground">+{rContrib}</span>
+                              </div>
                             </div>
-                          </div>
-
-                          <div className="rounded-lg bg-muted/50 p-4">
-                            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Route
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">Realtime adjustment</span>
+                              <div className="flex items-center gap-2">
+                                {realtimeAdj > 0 && (
+                                  <div className="h-2 rounded-full bg-amber-500" style={{ width: `${realtimeAdj * 2}px` }}></div>
+                                )}
+                                <span className="font-medium text-foreground">−{realtimeAdj}</span>
+                              </div>
                             </div>
-                            <div className="text-2xl font-bold text-foreground">{flight.breakdown.route}</div>
-                            <div className="mt-1 text-xs text-muted-foreground">
-                              Historical smoothness
-                            </div>
-                          </div>
-
-                          <div className="rounded-lg bg-muted/50 p-4">
-                            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Season
-                            </div>
-                            <div className="text-2xl font-bold text-foreground">{flight.breakdown.season}</div>
-                            <div className="mt-1 text-xs text-muted-foreground">
-                              {formatDate(flight.departTime)} conditions
-                            </div>
-                          </div>
-
-                          <div className="rounded-lg bg-muted/50 p-4">
-                            <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                              Real-time
-                            </div>
-                            <div className="text-2xl font-bold text-foreground">
-                              {rtPenalty != null ? Math.max(0, 100 - rtPenalty) : 100}
-                            </div>
-                            <div className="mt-1 text-xs text-muted-foreground">
-                              {rtPenalty != null && rtPenalty > 0
-                                ? `Realtime (beta): −${rtPenalty} pts`
-                                : "No penalty applied"}
+                            <div className="border-t pt-2 flex items-center justify-between">
+                              <span className="text-foreground">Total</span>
+                              <span className="font-bold text-foreground text-lg">{tciAdjusted}</span>
                             </div>
                           </div>
+                          <p className="mt-3 text-xs text-muted-foreground">
+                            Realtime uses upper-air wind as a turbulence proxy (beta). If unavailable, no adjustment is applied.
+                          </p>
                         </div>
 
-                        <p className="mt-3 text-sm text-muted-foreground">
-                          ({computeConfidence(date, rtPenalty != null)} forecast){" "}
-                          {explainResult({ 
-                            tci: tciAdjusted, 
-                            bucket: humanLabel(tciAdjusted) as any, 
-                            breakdown: flight.breakdown 
-                          })}
-                        </p>
-
-                        <p className="mt-2 text-sm text-muted-foreground">
+                        {/* "Try this for smoother" hint */}
+                        <p className="mt-4 text-sm text-muted-foreground">
                           {tciAdjusted >= 80
                             ? "Looks good. For ultra-smooth, pick A350/787 if available."
                             : flight.breakdown.route < 60
-                            ? "Try: route via a calmer hub to avoid the jet-stream core."
-                            : flight.breakdown.season < 50
-                            ? "Try: earlier morning departure to dodge peak winds."
-                            : "Try: earlier morning departure or a smoother aircraft (A350/787)."}
+                              ? "Try a connection via a calmer hub to avoid the jet-stream core."
+                              : "Try an earlier morning departure or a smoother aircraft (A350/787)."}
                         </p>
-
-                        <div className="mt-4 rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
-                          <strong className="text-foreground">TCI Formula:</strong> Aircraft (40%) + Route (60%)
-                          <p className="mt-2">
-                            TCI shown = Historical score ± Realtime (beta). Confidence is based on forecast horizon.
-                          </p>
-                        </div>
                       </div>
                     )}
                   </div>
