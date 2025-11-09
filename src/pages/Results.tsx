@@ -255,10 +255,12 @@ const Results = () => {
 
                       {/* Smoothness Badge & Chips */}
                       <div className="flex flex-col items-end gap-3">
-                        <SmoothnessBadge tci={tciAdjusted} bucket={bucketAdjusted as any} />
-                        
+                        {/* Score chips row */}
                         <div className="flex flex-wrap items-center justify-end gap-2">
-                          <div className="rounded-full border border-border bg-background px-3 py-1 text-xs font-medium">
+                          <div className="rounded-full border border-border bg-background px-3 py-1 text-sm font-semibold">
+                            {tciAdjusted} · {humanLabel(tciAdjusted)}
+                          </div>
+                          <div className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium">
                             Confidence: {confidence}
                           </div>
                           {rtPenalty != null && rtPenalty > 0 && (
@@ -267,6 +269,17 @@ const Results = () => {
                             </div>
                           )}
                         </div>
+
+                        {/* Short "felt experience" subline under the badge */}
+                        <p className="text-sm text-muted-foreground text-right">
+                          {tciAdjusted >= 85
+                            ? "Glass-smooth; aisle seats fine."
+                            : tciAdjusted >= 70
+                            ? "Occasional light bumps; aisle OK."
+                            : tciAdjusted >= 55
+                            ? "Choppy; pick window over wing."
+                            : "Rough; over-wing window strongly recommended."}
+                        </p>
 
                         <Button
                           variant="ghost"
@@ -328,19 +341,34 @@ const Results = () => {
                             <div className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                               Real-time
                             </div>
-                            <div className="text-2xl font-bold text-foreground">{flight.breakdown.realtime}</div>
+                            <div className="text-2xl font-bold text-foreground">
+                              {rtPenalty != null ? Math.max(0, 100 - rtPenalty) : 100}
+                            </div>
                             <div className="mt-1 text-xs text-muted-foreground">
-                              MVP placeholder
+                              {rtPenalty != null && rtPenalty > 0
+                                ? `Realtime (beta): −${rtPenalty} pts`
+                                : "No penalty applied"}
                             </div>
                           </div>
                         </div>
 
                         <p className="mt-3 text-sm text-muted-foreground">
+                          ({computeConfidence(date, rtPenalty != null)} forecast){" "}
                           {explainResult({ 
                             tci: tciAdjusted, 
-                            bucket: bucketAdjusted as any, 
+                            bucket: humanLabel(tciAdjusted) as any, 
                             breakdown: flight.breakdown 
                           })}
+                        </p>
+
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          {tciAdjusted >= 80
+                            ? "Looks good. For ultra-smooth, pick A350/787 if available."
+                            : flight.breakdown.route < 60
+                            ? "Try: route via a calmer hub to avoid the jet-stream core."
+                            : flight.breakdown.season < 50
+                            ? "Try: earlier morning departure to dodge peak winds."
+                            : "Try: earlier morning departure or a smoother aircraft (A350/787)."}
                         </p>
 
                         <div className="mt-4 rounded-lg bg-primary/5 p-3 text-xs text-muted-foreground">
