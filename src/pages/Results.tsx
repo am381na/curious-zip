@@ -505,6 +505,9 @@ const Results = () => {
                                 <span className="text-xs text-muted-foreground/70">
                                   {flight.aircraftIcao} smoothness rating: {flight.breakdown.aircraft}/100 × 40% = +{aContrib}
                                 </span>
+                                <span className="text-xs text-muted-foreground/60 italic mt-0.5">
+                                  {aircraftNote(flight.aircraftIcao)}
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="h-2 rounded-full bg-primary" style={{ width: `${aContrib * 2}px` }}></div>
@@ -516,6 +519,9 @@ const Results = () => {
                                 <span className="text-muted-foreground">Route history (60%)</span>
                                 <span className="text-xs text-muted-foreground/70">
                                   {origin}→{destination} in {monthName}: {roughnessPercent}% rough → {flight.breakdown.route}/100 smooth × 60% = +{rContrib}
+                                </span>
+                                <span className="text-xs text-muted-foreground/60 italic mt-0.5">
+                                  Based on historical turbulence reports for this route and season
                                 </span>
                               </div>
                               <div className="flex items-center gap-2">
@@ -561,6 +567,10 @@ const Results = () => {
                             <p>
                               We check upper-air wind speeds along your route. Stronger jet stream winds (100+ knots) create more turbulence, 
                               reducing your smoothness score by up to 15 points. {rtPenalty === null ? "If weather data isn't available, no adjustment is made." : ""}
+                            </p>
+                            <p className="font-medium text-foreground mt-3">Our Data Sources:</p>
+                            <p>
+                              Aircraft ratings reflect design features (wing dampening, weight, cabin pressure systems). Route patterns are based on historical turbulence frequency for each month. Jet stream data uses real-time upper-air wind forecasts when available.
                             </p>
                           </div>
                         </div>
