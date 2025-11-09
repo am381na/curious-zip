@@ -34,8 +34,8 @@ function renderForRoute(route: string): string {
 
 function outFileForRoute(route: string) {
   if (route === "/") return path.resolve("dist/index.html");
-  const clean = route.replace(/^\//, "").replace(/[?=&]/g, "_");
-  const dir = path.resolve("dist", clean);
+  const clean = route.replace(/^\//, "");            // e.g. results/JFK-LAX/2026-01-10
+  const dir = path.resolve("dist", clean);           // dist/results/JFK-LAX/2026-01-10
   fs.mkdirSync(dir, { recursive: true });
   return path.join(dir, "index.html");
 }

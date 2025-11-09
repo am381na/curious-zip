@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useParams, useLocation } from "react-router-dom";
 import { Plane, ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { mockFlights, Flight } from "@/lib/mockFlights";
@@ -8,10 +8,22 @@ import { SmoothnessBadge } from "@/components/SmoothnesseBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Results = () => {
+  const location = useLocation();
+  const params = useParams<{ od?: string; date?: string }>();
   const [searchParams] = useSearchParams();
-  const origin = searchParams.get("origin") || "";
-  const destination = searchParams.get("destination") || "";
-  const date = searchParams.get("date") || "";
+  
+  // Support both query params (?origin=X&destination=Y) and path params (/results/X-Y/date)
+  const origin = (
+    searchParams.get("origin") ||
+    (params.od ? params.od.split("-")[0] : "")
+  ).toUpperCase();
+  
+  const destination = (
+    searchParams.get("destination") ||
+    (params.od ? params.od.split("-")[1] : "")
+  ).toUpperCase();
+  
+  const date = searchParams.get("date") || params.date || "";
 
   const [flights, setFlights] = useState<Flight[]>([]);
   const [loading, setLoading] = useState(true);

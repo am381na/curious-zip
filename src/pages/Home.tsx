@@ -36,6 +36,26 @@ const Home = () => {
             </Button>
           </Link>
 
+          {/* Test Links for SSG Verification */}
+          <div className="mb-12 rounded-lg bg-muted/30 p-4 text-left">
+            <div className="mb-2 font-medium text-foreground">Test static pre-rendered pages:</div>
+            <ul className="list-disc space-y-1 pl-5 text-sm">
+              <li>
+                <a href="/search" className="text-primary hover:underline">/search</a>
+              </li>
+              <li>
+                <a href="/results/JFK-LAX/2026-01-10" className="text-primary hover:underline">
+                  /results/JFK-LAX/2026-01-10
+                </a>
+              </li>
+              <li>
+                <a href="/results/MIA-BOG/2026-01-10" className="text-primary hover:underline">
+                  /results/MIA-BOG/2026-01-10
+                </a>
+              </li>
+            </ul>
+          </div>
+
           {/* Score Inputs */}
           <div className="grid gap-6 md:grid-cols-3">
             <Card className="rounded-2xl border-2 p-6 transition-all hover:shadow-lg">
