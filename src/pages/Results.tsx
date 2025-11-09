@@ -393,7 +393,7 @@ const Results = () => {
                     {/* Top row: airline • stops • aircraft */}
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2 text-sm text-neutral-600">
-                        <AirlineBadge name={flight.airline} size={28} showName={false} />
+                        <AirlineBadge name={flight.airline} size={28} codeOnly />
                         <span className="font-medium text-neutral-900">{flight.airline}</span>
                         <span>• Nonstop</span>
                         <span>• {flight.aircraftIcao}</span>

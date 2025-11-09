@@ -27,8 +27,10 @@ export default function AirlineBadge({
   className = "",
 }: Props) {
   const { code, bg, fg } = lookupAirlineInfo(name);
-  const [logoOk, setLogoOk] = useState(true);
+  const [logoOk, setLogoOk] = useState(false); // Start with false - no real logos yet
   const src = `/airlines/${code}.svg`;
+  
+  console.log(`AirlineBadge: ${name} (${code}) - logo path: ${src}`);
 
   // Computed styles
   const pillHeight = Math.max(24, size);
