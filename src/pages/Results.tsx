@@ -378,6 +378,11 @@ const Results = () => {
               const tciAdjusted = clamp01(aContrib + rContrib - realtimeAdj);
               const label = humanLabel(tciAdjusted);
               const conf = computeConfidence(date, rtPenalty != null);
+              
+              // Calculate days ahead for confidence explanation
+              const flightDate = new Date(date);
+              const now = new Date();
+              const daysAhead = Math.max(0, Math.round((+flightDate - +now) / (24 * 3600 * 1000)));
               const durationMin = (new Date(flight.arriveTime).getTime() - new Date(flight.departTime).getTime()) / 60000;
 
               return (
@@ -442,7 +447,13 @@ const Results = () => {
                             height={10}
                           />
                         </div>
-                        <div className="text-xs rounded-full bg-neutral-100 px-2 py-1 whitespace-nowrap">
+                        <div className="text-xs rounded-full bg-neutral-100 px-2 py-1 whitespace-nowrap" title={
+                          conf === "High" 
+                            ? "High accuracy: Flight is within 3 days, forecasts are reliable"
+                            : conf === "Medium"
+                            ? "Medium accuracy: 4-10 days away with current wind data"
+                            : "Low accuracy: 10+ days away, conditions may change"
+                        }>
                           Confidence: {conf}
                         </div>
                         <Button
@@ -486,7 +497,16 @@ const Results = () => {
                               </div>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span className="text-muted-foreground">Realtime adjustment</span>
+                              <div className="flex flex-col">
+                                <span className="text-muted-foreground">Today's jet stream</span>
+                                <span className="text-xs text-muted-foreground/70">
+                                  {realtimeAdj > 0 
+                                    ? "(High winds → score reduced)" 
+                                    : rtPenalty === null 
+                                      ? "(Data unavailable)" 
+                                      : "(Calm conditions)"}
+                                </span>
+                              </div>
                               <div className="flex items-center gap-2">
                                 {realtimeAdj > 0 && (
                                   <div className="h-2 rounded-full bg-amber-500" style={{ width: `${realtimeAdj * 2}px` }}></div>
@@ -499,9 +519,21 @@ const Results = () => {
                               <span className="font-bold text-foreground text-lg">{tciAdjusted}</span>
                             </div>
                           </div>
-                          <p className="mt-3 text-xs text-muted-foreground">
-                            Realtime uses upper-air wind as a turbulence proxy (beta). If unavailable, no adjustment is applied.
-                          </p>
+                          <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+                            <p className="font-medium text-foreground">About the Confidence Score:</p>
+                            <p>
+                              {daysAhead <= 3 
+                                ? `Your flight is ${daysAhead} day${daysAhead === 1 ? '' : 's'} away, so forecast accuracy is High. Weather patterns are very predictable this close to departure.`
+                                : daysAhead <= 10
+                                ? `Your flight is ${daysAhead} days away. Confidence is ${conf} because mid-range forecasts ${rtPenalty !== null ? 'can be improved with current wind data' : 'are less certain'}.`
+                                : `Your flight is ${daysAhead} days away. Confidence is Low because conditions may change significantly before departure.`}
+                            </p>
+                            <p className="font-medium text-foreground mt-3">About Today's Jet Stream:</p>
+                            <p>
+                              We check upper-air wind speeds along your route. Stronger jet stream winds (100+ knots) create more turbulence, 
+                              reducing your smoothness score by up to 15 points. {rtPenalty === null ? "If weather data isn't available, no adjustment is made." : ""}
+                            </p>
+                          </div>
                         </div>
 
                         {/* "Try this for smoother" hint */}

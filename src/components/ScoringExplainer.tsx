@@ -24,8 +24,9 @@ export default function ScoringExplainer() {
               jet stream patterns and terrain. We use long-term turbulence history for your route.
             </li>
             <li>
-              <strong className="text-foreground">Real-Time Adjustment (0–15 pts)</strong> — When available, we add a small adjustment
-              based on current upper-air wind/turbulence signals.
+              <strong className="text-foreground">Today's Jet Stream (0–15 pts)</strong> — We check current upper-air wind speeds 
+              along your route. High winds mean choppier conditions, so we reduce the score by up to 15 points. 
+              If weather data isn't available, no adjustment is made.
             </li>
           </ul>
 
