@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -15,11 +15,11 @@ export interface FilterState {
 
 interface FilterSidebarProps {
   filters: FilterState;
-  onFiltersChange: (filters: FilterState) => void;
+  onFiltersChange: (next: FilterState | ((prev: FilterState) => FilterState)) => void;
   availableAirlines: string[];
 }
 
-export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: FilterSidebarProps) {
+export const FilterSidebar = React.memo(function FilterSidebar({ filters, onFiltersChange, availableAirlines }: FilterSidebarProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(["smoothness", "airlines", "stops"])
   );
@@ -51,11 +51,14 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
     setLocalRange([value[0], value[1]]);
   };
 
-  // Commit to parent only on release
+  // Commit to parent only on release (using functional update to avoid capturing filters)
   const commitSmoothness = useCallback((value: number[]) => {
     const next: [number, number] = [value[0], value[1]];
-    onFiltersChange({ ...filters, smoothnessRange: next });
-  }, [filters, onFiltersChange]);
+    onFiltersChange((prev) => ({
+      ...prev,
+      smoothnessRange: next,
+    }));
+  }, [onFiltersChange]);
 
   const handleAirlineToggle = (airline: string) => {
     const newAirlines = filters.airlines.includes(airline)
@@ -278,4 +281,4 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
       </FilterSection>
     </div>
   );
-}
+});
