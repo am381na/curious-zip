@@ -502,10 +502,10 @@ const Results = () => {
                             <div className="flex items-center justify-between">
                               <div className="flex flex-col">
                                 <span className="text-muted-foreground">Aircraft contribution (40%)</span>
-                                <span className="text-xs text-muted-foreground/70">
+                                <span className="text-sm text-muted-foreground/90">
                                   {flight.aircraftIcao} smoothness rating: {flight.breakdown.aircraft}/100 × 40% = +{aContrib}
                                 </span>
-                                <span className="text-xs text-muted-foreground/60 italic mt-0.5">
+                                <span className="text-sm text-muted-foreground/80 mt-1">
                                   {aircraftNote(flight.aircraftIcao)}
                                 </span>
                               </div>
@@ -517,10 +517,10 @@ const Results = () => {
                             <div className="flex items-center justify-between">
                               <div className="flex flex-col">
                                 <span className="text-muted-foreground">Route history (60%)</span>
-                                <span className="text-xs text-muted-foreground/70">
+                                <span className="text-sm text-muted-foreground/90">
                                   {origin}→{destination} in {monthName}: {roughnessPercent}% rough → {flight.breakdown.route}/100 smooth × 60% = +{rContrib}
                                 </span>
-                                <span className="text-xs text-muted-foreground/60 italic mt-0.5">
+                                <span className="text-sm text-muted-foreground/80 mt-1">
                                   Based on historical turbulence reports for this route and season
                                 </span>
                               </div>
@@ -554,16 +554,14 @@ const Results = () => {
                               <span className="font-bold text-foreground text-lg">{tciAdjusted}</span>
                             </div>
                           </div>
-                          <div className="mt-4 space-y-2 text-xs text-muted-foreground">
+                          <div className="mt-4 space-y-3 text-sm text-muted-foreground/90 leading-relaxed">
                             <p className="font-medium text-foreground">About the Confidence Score:</p>
                             <p>
-                              {daysAhead <= 3 
-                                ? `Your flight is ${daysAhead} day${daysAhead === 1 ? '' : 's'} away, so forecast accuracy is High. Weather patterns are very predictable this close to departure.`
-                                : daysAhead <= 10
-                                ? `Your flight is ${daysAhead} days away. Confidence is ${conf} because mid-range forecasts ${rtPenalty !== null ? 'can be improved with current wind data' : 'are less certain'}.`
-                                : `Your flight is ${daysAhead} days away. Confidence is Low because conditions may change significantly before departure.`}
+                              Confidence reflects how predictable conditions will be. Near-term flights (under 3 days away) have confidence near 100% 
+                              because jet stream forecasts are reliable. Farther out, we rely only on historical data (aircraft + route), 
+                              so confidence drops slightly.
                             </p>
-                            <p className="font-medium text-foreground mt-3">About Today's Jet Stream:</p>
+                            <p className="font-medium text-foreground mt-3">About the Jet Stream:</p>
                             <p>
                               We check upper-air wind speeds along your route. Stronger jet stream winds (100+ knots) create more turbulence, 
                               reducing your smoothness score by up to 15 points. {rtPenalty === null ? "If weather data isn't available, no adjustment is made." : ""}
