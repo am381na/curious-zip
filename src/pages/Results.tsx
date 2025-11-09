@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link, useSearchParams, useParams, useLocation } from "react-router-dom";
 import { Plane, ChevronDown, ChevronUp } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { mockFlights, Flight } from "@/lib/mockFlights";
 import { Skeleton } from "@/components/ui/skeleton";
 import { computeConfidence } from "@/lib/confidence";
@@ -10,6 +10,7 @@ import { humanLabel, aircraftContribution, routeContribution, clamp01 } from "@/
 import { estimateRealtimePenalty } from "@/lib/realtime";
 import { aircraftNote } from "@/lib/aircraftNotes";
 import ScoringExplainer from "@/components/ScoringExplainer";
+import { FilterSidebar, FilterState } from "@/components/FilterSidebar";
 
 // Minimal IATA → lat/lon map
 const IATA: Record<string, { lat: number; lon: number; city?: string }> = {
@@ -77,6 +78,12 @@ const Results = () => {
   const [error, setError] = useState(false);
   const [expandedFlights, setExpandedFlights] = useState<Set<string>>(new Set());
   const [rtPenalty, setRtPenalty] = useState<number | null>(null);
+  const [filters, setFilters] = useState<FilterState>({
+    smoothnessRange: [0, 100],
+    airlines: [],
+    stops: [],
+    departureTime: [],
+  });
 
   useEffect(() => {
     if (!origin || !destination || !date) {
@@ -114,6 +121,58 @@ const Results = () => {
       dateISO: date
     }).then(setRtPenalty).catch(() => setRtPenalty(null));
   }, [origin, destination, date]);
+
+  // Get unique airlines from flights
+  const availableAirlines = useMemo(() => {
+    return Array.from(new Set(flights.map((f) => f.airline))).sort();
+  }, [flights]);
+
+  // Apply filters to flights
+  const filteredFlights = useMemo(() => {
+    return flights.filter((flight) => {
+      // Calculate adjusted TCI for filtering
+      const aContrib = aircraftContribution(flight.breakdown.aircraft);
+      const rContrib = routeContribution(flight.breakdown.route);
+      const realtimeAdj = rtPenalty ?? 0;
+      const tciAdjusted = clamp01(aContrib + rContrib - realtimeAdj);
+
+      // Filter by smoothness range
+      if (
+        tciAdjusted < filters.smoothnessRange[0] ||
+        tciAdjusted > filters.smoothnessRange[1]
+      ) {
+        return false;
+      }
+
+      // Filter by airline
+      if (filters.airlines.length > 0 && !filters.airlines.includes(flight.airline)) {
+        return false;
+      }
+
+      // Filter by stops (assuming all mock flights are nonstop for now)
+      if (filters.stops.length > 0 && !filters.stops.includes("Nonstop")) {
+        return false;
+      }
+
+      // Filter by departure time
+      if (filters.departureTime.length > 0) {
+        const departHour = new Date(flight.departTime).getHours();
+        const timeOfDay =
+          departHour >= 6 && departHour < 12
+            ? "morning"
+            : departHour >= 12 && departHour < 18
+            ? "afternoon"
+            : departHour >= 18 && departHour < 24
+            ? "evening"
+            : "night";
+        if (!filters.departureTime.includes(timeOfDay)) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [flights, filters, rtPenalty]);
 
   const toggleExpanded = (flightId: string) => {
     setExpandedFlights((prev) => {
@@ -175,6 +234,28 @@ const Results = () => {
           </p>
         </div>
 
+        <div className="flex gap-6">
+          {/* Sidebar Filters */}
+          <aside className="hidden lg:block w-80 shrink-0">
+            <div className="sticky top-4">
+              <FilterSidebar
+                filters={filters}
+                onFiltersChange={setFilters}
+                availableAirlines={availableAirlines}
+              />
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+
+            {/* Results count */}
+            {!loading && !error && filteredFlights.length > 0 && (
+              <div className="mb-4 text-sm text-muted-foreground">
+                Showing {filteredFlights.length} of {flights.length} flights
+              </div>
+            )}
+
         {/* Loading State */}
         {loading && (
           <div className="space-y-4">
@@ -212,10 +293,27 @@ const Results = () => {
           </Card>
         )}
 
+        {/* No Results After Filtering */}
+        {!loading && !error && flights.length > 0 && filteredFlights.length === 0 && (
+          <Card className="rounded-xl p-12 text-center">
+            <p className="mb-4 text-lg text-muted-foreground">
+              No flights match your filters. Try adjusting your criteria.
+            </p>
+            <Button onClick={() => setFilters({
+              smoothnessRange: [0, 100],
+              airlines: [],
+              stops: [],
+              departureTime: [],
+            })}>
+              Clear Filters
+            </Button>
+          </Card>
+        )}
+
         {/* Flights List */}
-        {!loading && !error && flights.length > 0 && (
+        {!loading && !error && filteredFlights.length > 0 && (
           <div className="space-y-4">
-            {flights.map((flight) => {
+            {filteredFlights.map((flight) => {
               const flightId = `${flight.flightNumber}-${flight.departTime}`;
               const isExpanded = expandedFlights.has(flightId);
 
@@ -371,7 +469,9 @@ const Results = () => {
         )}
 
         {/* Scoring Explainer */}
-        {!loading && !error && flights.length > 0 && <ScoringExplainer />}
+        {!loading && !error && filteredFlights.length > 0 && <ScoringExplainer />}
+          </div>
+        </div>
       </main>
 
       {/* Footer */}
