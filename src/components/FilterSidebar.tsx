@@ -123,8 +123,7 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
           <Slider
             min={0}
             max={100}
-            step={1}
-            minStepsBetweenThumbs={5}
+            step={5}
             value={filters.smoothnessRange}
             onValueChange={handleSmoothnessChange}
             className="w-full"
