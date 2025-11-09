@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { getAirlineInfo } from "@/lib/airlineLogos";
 
 export interface FilterState {
   smoothnessRange: [number, number];
@@ -53,21 +54,14 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
     onFiltersChange({ ...filters, stops: newStops });
   };
 
-  const getAirlineLogo = (airline: string) => {
-    const logos: Record<string, string> = {
-      "American Airlines": "🇺🇸",
-      "Delta": "🔺",
-      "United": "🌐",
-      "Southwest": "❤️",
-      "British Airways": "🇬🇧",
-      "Virgin Atlantic": "✈️",
-      "Air France": "🇫🇷",
-      "Lufthansa": "🇩🇪",
-      "KLM": "🇳🇱",
-      "Iberia": "🇪🇸",
-    };
-    return logos[airline] || "✈️";
+  const selectAllAirlines = () => {
+    onFiltersChange({ ...filters, airlines: [] });
   };
+
+  const clearAllAirlines = () => {
+    onFiltersChange({ ...filters, airlines: [...availableAirlines] });
+  };
+
 
   const FilterSection = ({ 
     id, 
@@ -145,26 +139,51 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
 
       {/* Airlines */}
       <FilterSection id="airlines" title="Airlines">
+        <div className="mb-2 flex items-center gap-2 text-xs">
+          <button
+            onClick={selectAllAirlines}
+            className="text-primary hover:underline"
+          >
+            Select all
+          </button>
+          <span className="text-muted-foreground">|</span>
+          <button
+            onClick={clearAllAirlines}
+            className="text-primary hover:underline"
+          >
+            Clear all
+          </button>
+        </div>
         <div className="space-y-2">
           {availableAirlines.length === 0 ? (
             <p className="text-sm text-muted-foreground">No airlines available</p>
           ) : (
-            availableAirlines.map((airline) => (
-              <div key={airline} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`airline-${airline}`}
-                  checked={filters.airlines.length === 0 || filters.airlines.includes(airline)}
-                  onCheckedChange={() => handleAirlineToggle(airline)}
-                />
-                <Label
-                  htmlFor={`airline-${airline}`}
-                  className="flex items-center gap-2 text-sm font-normal cursor-pointer"
-                >
-                  <span className="text-lg">{getAirlineLogo(airline)}</span>
-                  <span>{airline}</span>
-                </Label>
-              </div>
-            ))
+            availableAirlines.map((airline) => {
+              const info = getAirlineInfo(airline);
+              const isChecked = filters.airlines.length === 0 || filters.airlines.includes(airline);
+              
+              return (
+                <div key={airline} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`airline-${airline}`}
+                    checked={isChecked}
+                    onCheckedChange={() => handleAirlineToggle(airline)}
+                  />
+                  <Label
+                    htmlFor={`airline-${airline}`}
+                    className="flex items-center gap-2 text-sm font-normal cursor-pointer flex-1"
+                  >
+                    <div
+                      className="flex h-6 w-8 items-center justify-center rounded text-xs font-bold"
+                      style={{ backgroundColor: info.bgColor, color: info.color }}
+                    >
+                      {info.code}
+                    </div>
+                    <span>{airline}</span>
+                  </Label>
+                </div>
+              );
+            })
           )}
         </div>
       </FilterSection>
@@ -172,21 +191,24 @@ export function FilterSidebar({ filters, onFiltersChange, availableAirlines }: F
       {/* Stops */}
       <FilterSection id="stops" title="Stops">
         <div className="space-y-2">
-          {["Nonstop", "1 stop", "2+ stops"].map((stop) => (
-            <div key={stop} className="flex items-center space-x-2">
-              <Checkbox
-                id={`stop-${stop}`}
-                checked={filters.stops.length === 0 || filters.stops.includes(stop)}
-                onCheckedChange={() => handleStopToggle(stop)}
-              />
-              <Label
-                htmlFor={`stop-${stop}`}
-                className="text-sm font-normal cursor-pointer"
-              >
-                {stop}
-              </Label>
-            </div>
-          ))}
+          {["Nonstop", "1 stop", "2+ stops"].map((stop) => {
+            const isChecked = filters.stops.length === 0 || filters.stops.includes(stop);
+            return (
+              <div key={stop} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`stop-${stop}`}
+                  checked={isChecked}
+                  onCheckedChange={() => handleStopToggle(stop)}
+                />
+                <Label
+                  htmlFor={`stop-${stop}`}
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  {stop}
+                </Label>
+              </div>
+            );
+          })}
         </div>
       </FilterSection>
 

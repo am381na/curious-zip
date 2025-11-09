@@ -8,6 +8,7 @@ export interface Flight {
   aircraftIcao: string;
   departTime: string;
   arriveTime: string;
+  price: number;
   tci: number;
   bucket: "Smooth" | "Moderate" | "Turbulent" | "Avoid";
   breakdown: {
@@ -50,6 +51,12 @@ export const mockFlights = (
     const departDate = new Date(baseDate);
     departDate.setHours(departHour, departMinute, 0, 0);
 
+    // Generate price based on airline and time
+    const basePrice = 350 + (i % airlines.length) * 80;
+    const timeVariation = departHour > 8 && departHour < 18 ? 50 : 0; // Peak hours more expensive
+    const randomVariation = Math.floor(Math.random() * 100) - 50;
+    const price = Math.max(299, basePrice + timeVariation + randomVariation);
+
     // Flight duration: 2-6 hours depending on distance
     const duration = 2 + Math.floor(Math.random() * 4);
     const arriveDate = new Date(departDate);
@@ -66,6 +73,7 @@ export const mockFlights = (
       aircraftIcao,
       departTime: departDate.toISOString(),
       arriveTime: arriveDate.toISOString(),
+      price,
       tci: scoring.tci,
       bucket: scoring.bucket,
       breakdown: scoring.breakdown,

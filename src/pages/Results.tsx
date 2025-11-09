@@ -11,6 +11,7 @@ import { estimateRealtimePenalty } from "@/lib/realtime";
 import { aircraftNote } from "@/lib/aircraftNotes";
 import ScoringExplainer from "@/components/ScoringExplainer";
 import { FilterSidebar, FilterState } from "@/components/FilterSidebar";
+import { getAirlineInfo } from "@/lib/airlineLogos";
 
 // Minimal IATA → lat/lon map
 const IATA: Record<string, { lat: number; lon: number; city?: string }> = {
@@ -328,50 +329,74 @@ const Results = () => {
               return (
                 <Card key={flightId} className="overflow-hidden rounded-xl border-2 transition-all hover:shadow-lg">
                   <div className="p-6">
-                    <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                      {/* Flight Info */}
-                      <div className="flex-1 space-y-3">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-xl font-bold text-foreground">{flight.airline}</h3>
-                            <span className="rounded-md bg-muted px-2 py-1 text-sm font-mono font-semibold">
-                              {flight.flightNumber}
-                            </span>
-                            <span className="rounded-md bg-muted px-2 py-1 text-sm font-mono">
-                              {flight.aircraftIcao}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {aircraftNote(flight.aircraftIcao)}
-                          </p>
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+                      {/* Left: Airline Logo + Flight Info */}
+                      <div className="flex gap-4 flex-1">
+                        {/* Airline Logo */}
+                        <div
+                          className="flex h-12 w-12 shrink-0 items-center justify-center rounded text-base font-bold"
+                          style={{
+                            backgroundColor: getAirlineInfo(flight.airline).bgColor,
+                            color: getAirlineInfo(flight.airline).color,
+                          }}
+                        >
+                          {getAirlineInfo(flight.airline).code}
                         </div>
 
-                        <div className="flex items-center gap-4 text-lg">
-                          <div>
-                            <div className="font-bold text-foreground">{formatTime(flight.departTime)}</div>
-                            <div className="text-sm text-muted-foreground">{flight.origin}</div>
+                        {/* Flight Details */}
+                        <div className="flex-1 space-y-2">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-base font-semibold text-foreground">{flight.airline}</h3>
+                              <span className="text-xs text-muted-foreground">
+                                {flight.flightNumber}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {flight.aircraftIcao}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {aircraftNote(flight.aircraftIcao)}
+                            </p>
                           </div>
-                          <div className="flex-1 text-center text-muted-foreground">→</div>
-                          <div className="text-right">
-                            <div className="font-bold text-foreground">{formatTime(flight.arriveTime)}</div>
-                            <div className="text-sm text-muted-foreground">{flight.destination}</div>
+
+                          <div className="flex items-center gap-4 text-base">
+                            <div>
+                              <div className="font-bold text-foreground">{formatTime(flight.departTime)}</div>
+                              <div className="text-xs text-muted-foreground">{flight.origin}</div>
+                            </div>
+                            <div className="flex-1 text-center text-sm text-muted-foreground">
+                              Nonstop
+                            </div>
+                            <div className="text-right">
+                              <div className="font-bold text-foreground">{formatTime(flight.arriveTime)}</div>
+                              <div className="text-xs text-muted-foreground">{flight.destination}</div>
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Score & Decision Info */}
-                      <div className="flex flex-col items-end gap-3">
-                        {/* Header chips */}
+                      {/* Right: Price + Smoothness Score */}
+                      <div className="flex flex-col items-end gap-3 lg:w-64">
+                        {/* Price */}
+                        <div className="text-right">
+                          <div className="text-2xl font-bold text-foreground">
+                            ${flight.price}
+                          </div>
+                          <div className="text-xs text-muted-foreground">per person</div>
+                        </div>
+
+                        {/* Smoothness Score */}
                         <div className="flex flex-wrap items-center justify-end gap-2">
-                          <div className="rounded-full border border-border bg-background px-4 py-2 text-base font-bold">
+                          <div className="rounded-full border border-border bg-background px-3 py-1.5 text-sm font-bold">
                             {tciAdjusted} · {label}
                           </div>
-                          <div className="rounded-full border border-border bg-muted px-3 py-1 text-xs font-medium">
-                            Confidence: {conf}
+                          <div className="rounded-full border border-border bg-muted px-2 py-1 text-xs font-medium">
+                            {conf}
                           </div>
                           {realtimeAdj > 0 && (
-                            <div className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
-                              Realtime (beta): −{realtimeAdj} pts
+                            <div className="rounded-full border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900">
+                              −{realtimeAdj}
                             </div>
                           )}
                         </div>
